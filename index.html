@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebLucy - Cheminformatics Teaching Tool</title>
+    <!-- Kekule.js for molecule handling and SMILES generation -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/kekule/dist/themes/default/kekule.css" />
+    <script src="https://cdn.jsdelivr.net/npm/kekule/dist/kekule.min.js?modules=io,chemWidget"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #545b62;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+            .molecule-panel {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .molecule-panel {
+                grid-column: span 1;
+            }
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .matrix-container {
+            overflow-x: auto;
+        }
+
+        table.matrix {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+
+        table.matrix th,
+        table.matrix td {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        table.matrix th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        table.matrix td {
+            background: white;
+        }
+
+        table.matrix td.bond-0 {
+            background: #f8f9fa;
+            color: #ccc;
+        }
+
+        table.matrix td.bond-1 {
+            background: #d4edda;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        table.matrix td.bond-2 {
+            background: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
+
+        table.matrix td.bond-3 {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+        }
+
+        table.matrix td.current {
+            outline: 3px solid #007bff;
+            outline-offset: -3px;
+        }
+
+        table.matrix td.diagonal {
+            background: #e9ecef;
+        }
+
+        .atom-info {
+            margin-top: 15px;
+        }
+
+        .atom-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .atom-info th,
+        .atom-info td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .atom-info th {
+            background: #f8f9fa;
+        }
+
+        .atom-info input[type="number"] {
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .atom-info input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .step-info {
+            text-align: center;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        #molecule-viewer-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            min-height: 300px;
+        }
+
+        #molecule-viewer {
+            width: 100%;
+            height: 300px;
+        }
+
+        .molecule-panel.has-molecule #molecule-viewer-container {
+            background: white;
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebLucy - Connection Matrix Explorer</h1>
+
+    <div class="input-section">
+        <div class="input-row">
+            <label for="formula">Molecular Formula:</label>
+            <input type="text" id="formula" placeholder="e.g., C5H12" value="C5H12">
+            <button class="btn-primary" onclick="initializeMolecule()">Create Matrix</button>
+        </div>
+        <p class="help-text">
+            Enter a molecular formula with heavy atoms (C, N, O, S, P, etc.) and hydrogens.
+            The matrix will show connections between heavy atoms only.
+        </p>
+    </div>
+
+    <div class="controls">
+        <button class="btn-secondary" id="btn-reset" onclick="resetMatrix()" disabled>Reset</button>
+        <button class="btn-secondary" id="btn-back" onclick="stepBackward()" disabled>&larr; Back</button>
+        <button class="btn-primary" id="btn-forward" onclick="stepForward()" disabled>Forward &rarr;</button>
+        <button class="btn-secondary" id="btn-auto" onclick="toggleAutoStep()" disabled>Auto Step</button>
+    </div>
+
+    <div class="step-info" id="step-info">Enter a formula and click "Create Matrix" to begin</div>
+
+    <div class="main-content">
+        <div class="panel">
+            <h2>Connection Matrix</h2>
+            <div class="matrix-container" id="matrix-container">
+                <p style="text-align: center; color: #666;">Matrix will appear here</p>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f8f9fa;"></div>
+                    <span>No bond (0)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #d4edda;"></div>
+                    <span>Single (1)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff3cd;"></div>
+                    <span>Double (2)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f8d7da;"></div>
+                    <span>Triple (3)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Atom Information</h2>
+            <div class="atom-info" id="atom-info">
+                <p style="color: #666;">Atom details will appear here</p>
+            </div>
+            <div class="status info" id="status">
+                Ready to start. Enter a molecular formula above.
+            </div>
+        </div>
+
+        <div class="molecule-panel panel" id="molecule-panel">
+            <h2>Molecule Structure</h2>
+            <div id="molecule-viewer-container">
+                <div id="molecule-viewer">
+                    <p style="text-align: center; color: #999; padding-top: 130px;">
+                        Molecule will appear here
+                    </p>
+                </div>
+            </div>
+            <p class="molecule-status" id="molecule-status" style="text-align: center; margin-top: 10px; color: #666;">
+                Find a valid structure to see the 2D depiction.
+            </p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
