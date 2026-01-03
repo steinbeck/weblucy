@@ -65,6 +65,10 @@ The bond insertion algorithm performs a depth-first traversal of possible bond c
 6. Backtrack and try higher bond orders (2, 3) or no bond (0)
 7. Repeat until all configurations are explored
 
+## Full-Fledged Structure Generation
+
+For production-level structure generation from molecular formulas, consider using [SURGE](https://github.com/StructureGenerator/surge) (Structure Generator), a highly efficient and comprehensive tool for exhaustive structure enumeration with advanced canonicalization and symmetry handling.
+
 ## License
 
 MIT License
