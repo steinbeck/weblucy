@@ -6,7 +6,7 @@ A web-based cheminformatics teaching tool for exploring molecular connection mat
 
 WebLucy is an interactive webapp designed to teach students how molecular structures can be systematically generated from a molecular formula. It visualizes the process of bond insertion in a connection matrix, demonstrating the depth-first search algorithm used in structure elucidation.
 
-The algorithm is based on the original LUCY (semiautomatische Strukturaufklärung) software by Christoph Steinbeck (1994-1995).
+The algorithm is based on the original LUCY (semiautomatische Strukturaufklärung) software by Christoph Steinbeck (1994-1995). The bond generation algorithm is extremely basic and not suited for the generation of larger molecules due to the lack of canonicalization. In the context of NMR-generated contrains, however, it works reasonably well. 
 
 ## Features
 
