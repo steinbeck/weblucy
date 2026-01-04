@@ -81,16 +81,50 @@ Then open http://localhost:8000
 
 ## Algorithm
 
-The bond insertion algorithm performs a depth-first traversal of possible bond configurations:
+The bond insertion algorithm performs a depth-first traversal of possible bond configurations.
 
-1. Start at matrix position (2,1)
-2. Try bond orders in the selected sequence (1→2→3→0 or 3→2→1→0)
-3. If a bond value exceeds available valence, try the next value in sequence
-4. Continue until the matrix is complete
-5. Check if all valences are satisfied and the molecule is connected
-6. If valid, display the structure and increment the counter
-7. Backtrack and try the next bond order in sequence
-8. Repeat until all configurations are explored
+### Pseudo-code
+
+```
+FUNCTION GenerateStructures(matrix, position):
+    IF position is beyond last cell THEN
+        IF all valences satisfied AND molecule is connected THEN
+            OUTPUT valid structure
+        END IF
+        RETURN
+    END IF
+
+    FOR each bond_order IN sequence (1,2,3,0) or (3,2,1,0):
+        IF bond_order respects valence constraints THEN
+            SET matrix[position] = bond_order
+            GenerateStructures(matrix, next_position)    // Recurse
+            SET matrix[position] = 0                     // Backtrack
+        END IF
+    END FOR
+END FUNCTION
+
+FUNCTION IsConnected(matrix):
+    visited = {atom_1}
+    stack = [atom_1]
+    WHILE stack not empty:
+        atom = stack.pop()
+        FOR each neighbor bonded to atom:
+            IF neighbor not in visited THEN
+                visited.add(neighbor)
+                stack.push(neighbor)
+            END IF
+        END FOR
+    END WHILE
+    RETURN |visited| == N
+END FUNCTION
+```
+
+### Traversal Order
+
+The algorithm fills the lower triangle of the N×N connection matrix column by column:
+```
+Position sequence: (2,1) → (3,1) → ... → (N,1) → (3,2) → (4,2) → ... → (N,N-1)
+```
 
 ## License
 
