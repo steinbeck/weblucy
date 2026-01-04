@@ -325,27 +325,29 @@ function stepForward() {
         }
         i = 2;
         j = 1;
-        trySetBond(i, j, 1);
-        saveState(i, j, `Set bond (${i},${j}) = 1`);
+        const startBond = getStartingBondValue();
+        trySetBond(i, j, startBond);
+        saveState(i, j, `Set bond (${i},${j}) = ${startBond}`);
         renderMatrix(i, j);
         renderAtomInfo();
         updateControls();
         document.getElementById('step-info').textContent =
-            `Step ${currentStateIndex} - Set bond (${i},${j}) = 1`;
+            `Step ${currentStateIndex} - Set bond (${i},${j}) = ${startBond}`;
         return true;
     }
 
     // Try to move to next position (depth-first: go deeper first)
     const next = getNextPosition(i, j);
     if (next !== null) {
-        // Move to next cell, start with bond=1
-        trySetBond(next.i, next.j, 1);
-        saveState(next.i, next.j, `Set bond (${next.i},${next.j}) = 1`);
+        // Move to next cell, start with initial bond value based on mode
+        const startBond = getStartingBondValue();
+        trySetBond(next.i, next.j, startBond);
+        saveState(next.i, next.j, `Set bond (${next.i},${next.j}) = ${startBond}`);
         renderMatrix(next.i, next.j);
         renderAtomInfo();
         updateControls();
         document.getElementById('step-info').textContent =
-            `Step ${currentStateIndex} - Set bond (${next.i},${next.j}) = 1`;
+            `Step ${currentStateIndex} - Set bond (${next.i},${next.j}) = ${startBond}`;
         checkCompletion();
         return true;
     }
@@ -356,16 +358,47 @@ function stepForward() {
 }
 
 /**
- * Get next bond value to try in the sequence: 1, 2, 3, 0
+ * Get the bond order mode from dropdown (ascending or descending)
+ */
+function getBondOrderMode() {
+    const select = document.getElementById('bond-order-select');
+    return select ? select.value : 'asc';
+}
+
+/**
+ * Get the starting bond value based on order mode
+ * Ascending: start with 1, Descending: start with 3
+ */
+function getStartingBondValue() {
+    return getBondOrderMode() === 'desc' ? 3 : 1;
+}
+
+/**
+ * Get next bond value to try based on current mode
+ * Ascending: 1, 2, 3, 0 | Descending: 3, 2, 1, 0
  * Returns null if all values exhausted
  */
 function getNextBondValue(currentBond) {
+    const mode = getBondOrderMode();
+
     if (currentBond === 0) {
-        return null; // Exhausted all options (we tried 1, 2, 3, 0)
-    } else if (currentBond < 3) {
-        return currentBond + 1; // Try next higher: 1→2, 2→3
+        return null; // Exhausted all options
+    }
+
+    if (mode === 'desc') {
+        // Descending: 3→2→1→0
+        if (currentBond > 1) {
+            return currentBond - 1; // 3→2, 2→1
+        } else {
+            return 0; // After 1, try 0 (no bond)
+        }
     } else {
-        return 0; // After 3, try 0 (no bond)
+        // Ascending: 1→2→3→0
+        if (currentBond < 3) {
+            return currentBond + 1; // 1→2, 2→3
+        } else {
+            return 0; // After 3, try 0 (no bond)
+        }
     }
 }
 
