@@ -1016,9 +1016,12 @@ async function silentGeneration() {
     let bondConfigurationsChecked = 0;
 
     /**
-     * Generate all valid H distributions that sum to totalH
+     * Generate unique (sorted, non-increasing) H distributions that sum to totalH.
+     * Since all atoms of the same type are initially equivalent, we only need
+     * to generate canonical distributions where H counts are in non-increasing order.
+     * This dramatically reduces duplicates from symmetry.
      */
-    function* generateHDistributions(atomIndex, remainingH, currentDistribution) {
+    function* generateUniqueHDistributions(atomIndex, remainingH, currentDistribution, maxAllowed) {
         if (atomIndex >= N) {
             if (remainingH === 0) {
                 yield [...currentDistribution];
@@ -1027,23 +1030,20 @@ async function silentGeneration() {
         }
 
         const maxH = atomInfo[atomIndex].maxH;
-        const minH = Math.max(0, remainingH - sumMaxH(atomIndex + 1));
+        // maxAllowed ensures non-increasing order (each H count <= previous)
+        const effectiveMax = Math.min(maxH, remainingH, maxAllowed);
+        const remainingAtoms = N - atomIndex - 1;
 
-        for (let h = minH; h <= Math.min(maxH, remainingH); h++) {
-            currentDistribution[atomIndex] = h;
-            yield* generateHDistributions(atomIndex + 1, remainingH - h, currentDistribution);
+        // Try from high to low to get non-increasing order
+        for (let h = effectiveMax; h >= 0; h--) {
+            // Check if remaining atoms can absorb remaining hydrogens
+            // (each can take at most min(h, maxH) to maintain non-increasing order)
+            const maxRemainingH = remainingAtoms * Math.min(h, maxH);
+            if (maxRemainingH >= remainingH - h) {
+                currentDistribution[atomIndex] = h;
+                yield* generateUniqueHDistributions(atomIndex + 1, remainingH - h, currentDistribution, h);
+            }
         }
-    }
-
-    /**
-     * Sum of maxH for atoms from index to end
-     */
-    function sumMaxH(fromIndex) {
-        let sum = 0;
-        for (let i = fromIndex; i < N; i++) {
-            sum += atomInfo[i].maxH;
-        }
-        return sum;
     }
 
     /**
@@ -1170,9 +1170,11 @@ async function silentGeneration() {
         enumerate(0);
     }
 
-    // Enumerate all H distributions and for each, enumerate bonds
+    // Enumerate all unique H distributions and for each, enumerate bonds
+    // Start with maxAllowed = 3 (the maximum H any carbon can have)
+    const initialMaxH = Math.max(...atomInfo.map(a => a.maxH));
     try {
-        for (const hDistribution of generateHDistributions(0, totalH, new Array(N))) {
+        for (const hDistribution of generateUniqueHDistributions(0, totalH, new Array(N), initialMaxH)) {
             hDistributionsChecked++;
 
             // Calculate freeValences (1-indexed)
@@ -1209,7 +1211,7 @@ async function silentGeneration() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        showStatus(`Generated ${validSmiles.length} structures (including duplicates) from ${hDistributionsChecked} H-distributions. Download started.`, 'success');
+        showStatus(`Generated ${validSmiles.length} structures (including duplicates) from ${hDistributionsChecked} unique H-distributions. Download started.`, 'success');
     } else {
         showStatus('No valid structures found.', 'warning');
     }
