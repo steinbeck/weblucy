@@ -110,4 +110,4 @@ Christoph Steinbeck
 
 - [Kekule.js](https://partridgejiang.github.io/Kekule.js/) by Partridge Jiang
 - [JSZip](https://stuk.github.io/jszip/) by Stuart Knightley
-- [Cheminformatics Microservice](https://api.naturalproducts.net) by the Steinbeck Lab
+- [Cheminformatics Microservice](https://api.naturalproducts.net) ([Web App](https://app.naturalproducts.net/)) by the Steinbeck Lab
