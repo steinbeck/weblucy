@@ -8,7 +8,7 @@ A web-based cheminformatics teaching tool for exploring molecular connection mat
 
 WebLucy is an interactive webapp designed to teach students how molecular structures can be systematically generated from a molecular formula. It visualizes the process of bond insertion in a connection matrix, demonstrating the depth-first search algorithm used in structure elucidation.
 
-The algorithm is based on the original LUCY (semiautomatische Strukturaufklärung) software by Christoph Steinbeck (1994-1995). The bond generation algorithm is extremely basic and not suited for the generation of larger molecules due to the lack of canonicalization. In the context of NMR-generated constraints, however, it works reasonably well.
+The algorithm is based on the original LUCY (semiautomatische Strukturaufklärung) software [1]. The bond generation algorithm is extremely basic and not suited for the generation of larger molecules due to the lack of canonicalization. In the context of NMR-generated constraints, however, it works reasonably well.
 
 For production-level structure generation from molecular formulas, consider using [SURGE](https://github.com/StructureGenerator/surge) (Structure Generator), a highly efficient and comprehensive tool for exhaustive structure enumeration with advanced canonicalization and symmetry handling.
 
@@ -20,7 +20,7 @@ For production-level structure generation from molecular formulas, consider usin
 - **Editable Hydrogen Distribution**: Freely adjust how hydrogens are distributed among heavy atoms
 - **Step-by-Step Algorithm**: Walk through the bond insertion process with Forward/Back buttons
 - **Connectivity Validation**: Only connected molecules are accepted as valid structures
-- **2D Structure Depiction**: Valid molecules are displayed using the Cheminformatics Microservice
+- **2D Structure Depiction**: Valid molecules are displayed using the Cheminformatics Microservice [2]
 - **Structure Counter**: Track how many valid structures have been found (shown in panel heading)
 
 ### Auto-Step Mode
@@ -77,7 +77,7 @@ Then open http://localhost:8000
 
 - [Kekule.js](https://partridgejiang.github.io/Kekule.js/) - For molecule representation and SMILES generation
 - [JSZip](https://stuk.github.io/jszip/) - For creating downloadable zip files
-- [Cheminformatics Microservice](https://api.naturalproducts.net/latest/docs) - For 2D structure depiction ([Publication](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-023-00762-4))
+- [Cheminformatics Microservice](https://api.naturalproducts.net/latest/docs) [2] - For 2D structure depiction
 
 ## Algorithm
 
@@ -100,9 +100,14 @@ MIT License
 
 Christoph Steinbeck
 
+## References
+
+[1] Steinbeck C. LUCY—A Program for Structure Elucidation from NMR Correlation Experiments. *Angew. Chem. Int. Ed. Engl.* 1996, 35(17), 1984-1986. [DOI: 10.1002/anie.199619841](https://doi.org/10.1002/anie.199619841)
+
+[2] Rajan K, Chandrasekhar V, Sharma N, Kanakam SRS, Steinbeck C. Cheminformatics Microservice: unifying access to open cheminformatics toolkits. *J Cheminform* 2023, 15, 107. [DOI: 10.1186/s13321-023-00762-4](https://doi.org/10.1186/s13321-023-00762-4)
+
 ## Acknowledgments
 
-- Original LUCY algorithm (1994-1995)
 - [Kekule.js](https://partridgejiang.github.io/Kekule.js/) by Partridge Jiang
 - [JSZip](https://stuk.github.io/jszip/) by Stuart Knightley
-- [Cheminformatics Microservice](https://api.naturalproducts.net) by the Steinbeck Lab - Rajan K, Chandrasekhar V, Sharma N, et al. *J Cheminform* 15, 107 (2023). [DOI: 10.1186/s13321-023-00762-4](https://doi.org/10.1186/s13321-023-00762-4)
+- [Cheminformatics Microservice](https://api.naturalproducts.net) by the Steinbeck Lab
