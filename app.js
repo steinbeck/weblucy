@@ -318,8 +318,11 @@ function stepForward() {
     let i = currentState.i;
     let j = currentState.j;
 
-    // If we're at the beginning, start at position (2,1) with bond=1
+    // If we're at the beginning, validate H-Count sum before starting
     if (i === 0 && j === 0) {
+        if (!validateHCountSum()) {
+            return false;
+        }
         i = 2;
         j = 1;
         trySetBond(i, j, 1);
@@ -453,6 +456,14 @@ function toggleAutoStep() {
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-secondary');
     } else {
+        // Validate H-Count sum before starting (if at initial state)
+        const currentState = states[currentStateIndex];
+        if (currentState && currentState.i === 0 && currentState.j === 0) {
+            if (!validateHCountSum()) {
+                return;
+            }
+        }
+
         // Start auto-stepping
         autoStepInterval = setInterval(() => {
             const hasMore = stepForward();
@@ -584,32 +595,15 @@ function renderMatrix(highlightI = 0, highlightJ = 0) {
 
 /**
  * Handle H-Count change from input field
+ * Allows any valid value (0 to maxH) - sum is validated only when running
  */
 function updateHCount(atomIndex, newValue) {
     const atom = getAtom(atomIndex);
-    const oldValue = atom.hCount;
     const parsed = parseInt(newValue);
 
-    // Validate
+    // Only validate individual value range
     if (isNaN(parsed) || parsed < 0 || parsed > atom.maxH) {
         renderAtomInfo(); // Reset to valid value
-        return;
-    }
-
-    // Calculate what total H would be with this change
-    let newTotalH = 0;
-    for (let i = 1; i <= N; i++) {
-        if (i === atomIndex) {
-            newTotalH += parsed;
-        } else {
-            newTotalH += getAtom(i).hCount;
-        }
-    }
-
-    // Check if total H matches required
-    if (newTotalH !== atoms.totalH) {
-        showStatus(`H-Count sum must equal ${atoms.totalH}. Current sum would be ${newTotalH}.`, 'warning');
-        renderAtomInfo(); // Reset
         return;
     }
 
@@ -627,7 +621,39 @@ function updateHCount(atomIndex, newValue) {
     // Reset matrix since H distribution changed
     resetMatrixState();
 
-    showStatus(`Updated H-Count. Now need ${atoms.bondsNeeded} bonds between heavy atoms.`, 'success');
+    // Show status based on whether sum is valid
+    const currentHSum = getCurrentHSum();
+    if (currentHSum === atoms.totalH) {
+        showStatus(`H-Count valid. Need ${atoms.bondsNeeded} bonds between heavy atoms.`, 'success');
+    } else {
+        showStatus(`H-Count sum is ${currentHSum}, need ${atoms.totalH}. Adjust before running.`, 'warning');
+    }
+
+    renderAtomInfo();
+}
+
+/**
+ * Get current sum of H-Counts
+ */
+function getCurrentHSum() {
+    let sum = 0;
+    for (let i = 1; i <= N; i++) {
+        sum += getAtom(i).hCount;
+    }
+    return sum;
+}
+
+/**
+ * Validate H-Count sum before running
+ * Returns true if valid, false otherwise
+ */
+function validateHCountSum() {
+    const currentHSum = getCurrentHSum();
+    if (currentHSum !== atoms.totalH) {
+        showStatus(`Cannot run: H-Count sum is ${currentHSum}, must equal ${atoms.totalH}.`, 'error');
+        return false;
+    }
+    return true;
 }
 
 /**
