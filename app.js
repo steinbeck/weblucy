@@ -309,9 +309,10 @@ function isAtEnd(i, j) {
  * Step forward: depth-first traversal like mol.c
  * 1. If not at end, move to next cell with bond=0
  * 2. If at end, backtrack and increment
+ * Returns true if there are more configurations to explore, false if exhausted
  */
 function stepForward() {
-    if (states.length === 0) return;
+    if (states.length === 0) return false;
 
     const currentState = states[currentStateIndex];
     let i = currentState.i;
@@ -328,7 +329,7 @@ function stepForward() {
         updateControls();
         document.getElementById('step-info').textContent =
             `Step ${currentStateIndex} - Set bond (${i},${j}) = 1`;
-        return;
+        return true;
     }
 
     // Try to move to next position (depth-first: go deeper first)
@@ -343,11 +344,12 @@ function stepForward() {
         document.getElementById('step-info').textContent =
             `Step ${currentStateIndex} - Set bond (${next.i},${next.j}) = 1`;
         checkCompletion();
-        return;
+        return true;
     }
 
     // At end of matrix - need to backtrack and try incrementing
-    backtrackAndIncrement();
+    // Returns true if found new config, false if exhausted
+    return backtrackAndIncrement();
 }
 
 /**
@@ -366,6 +368,7 @@ function getNextBondValue(currentBond) {
 
 /**
  * Backtrack through states and find a position where we can try the next bond value
+ * Returns true if a new configuration was found, false if all configurations exhausted
  */
 function backtrackAndIncrement() {
     // We need to find the most recent position where we can try a different bond
@@ -399,7 +402,7 @@ function backtrackAndIncrement() {
                 document.getElementById('step-info').textContent =
                     `Step ${currentStateIndex} - Backtrack: Set bond (${i},${j}) = ${nextBond}`;
                 checkCompletion();
-                return;
+                return true; // Found a new configuration
             }
 
             // This bond value didn't work, try next in sequence
@@ -413,6 +416,7 @@ function backtrackAndIncrement() {
     // Restore current state
     restoreState(currentStateIndex);
     showStatus('Explored all valid bond configurations for this H-distribution.', 'info');
+    return false; // No more configurations
 }
 
 /**
@@ -442,17 +446,18 @@ function toggleAutoStep() {
     const btn = document.getElementById('btn-auto');
 
     if (autoStepInterval) {
+        // Stop auto-stepping
         clearInterval(autoStepInterval);
         autoStepInterval = null;
         btn.textContent = 'Auto Step';
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-secondary');
     } else {
+        // Start auto-stepping
         autoStepInterval = setInterval(() => {
-            stepForward();
-            // Stop if we can't go forward anymore
-            const currentState = states[currentStateIndex];
-            if (currentState.i === N && currentState.j === N - 1) {
+            const hasMore = stepForward();
+            // Stop if all configurations exhausted
+            if (!hasMore) {
                 toggleAutoStep();
             }
         }, 500);
