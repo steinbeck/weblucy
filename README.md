@@ -20,7 +20,7 @@ For production-level structure generation from molecular formulas, consider usin
 - **Editable Hydrogen Distribution**: Freely adjust how hydrogens are distributed among heavy atoms
 - **Step-by-Step Algorithm**: Walk through the bond insertion process with Forward/Back buttons
 - **Connectivity Validation**: Only connected molecules are accepted as valid structures
-- **2D Structure Depiction**: Valid molecules are displayed using the Cheminformatics Microservice [2]
+- **2D Structure Depiction**: Valid molecules are displayed using the [Cheminformatics Microservice](https://api.naturalproducts.net/latest/docs) [2]
 - **Structure Counter**: Track how many valid structures have been found (shown in panel heading)
 
 ### Auto-Step Mode
