@@ -325,29 +325,47 @@ function stepForward() {
         }
         i = 2;
         j = 1;
-        const startBond = getStartingBondValue();
-        trySetBond(i, j, startBond);
-        saveState(i, j, `Set bond (${i},${j}) = ${startBond}`);
+
+        // Try bond values in sequence until one works
+        let bondValue = getStartingBondValue();
+        while (bondValue !== null && !trySetBond(i, j, bondValue)) {
+            bondValue = getNextBondValue(bondValue);
+        }
+
+        if (bondValue === null) {
+            showStatus('No valid bond configuration possible for first cell.', 'error');
+            return false;
+        }
+
+        saveState(i, j, `Set bond (${i},${j}) = ${bondValue}`);
         renderMatrix(i, j);
         renderAtomInfo();
         updateControls();
         document.getElementById('step-info').textContent =
-            `Step ${currentStateIndex} - Set bond (${i},${j}) = ${startBond}`;
+            `Step ${currentStateIndex} - Set bond (${i},${j}) = ${bondValue}`;
         return true;
     }
 
     // Try to move to next position (depth-first: go deeper first)
     const next = getNextPosition(i, j);
     if (next !== null) {
-        // Move to next cell, start with initial bond value based on mode
-        const startBond = getStartingBondValue();
-        trySetBond(next.i, next.j, startBond);
-        saveState(next.i, next.j, `Set bond (${next.i},${next.j}) = ${startBond}`);
+        // Move to next cell, try bond values in sequence until one works
+        let bondValue = getStartingBondValue();
+        while (bondValue !== null && !trySetBond(next.i, next.j, bondValue)) {
+            bondValue = getNextBondValue(bondValue);
+        }
+
+        if (bondValue === null) {
+            // No valid bond value for this cell - need to backtrack
+            return backtrackAndIncrement();
+        }
+
+        saveState(next.i, next.j, `Set bond (${next.i},${next.j}) = ${bondValue}`);
         renderMatrix(next.i, next.j);
         renderAtomInfo();
         updateControls();
         document.getElementById('step-info').textContent =
-            `Step ${currentStateIndex} - Set bond (${next.i},${next.j}) = ${startBond}`;
+            `Step ${currentStateIndex} - Set bond (${next.i},${next.j}) = ${bondValue}`;
         checkCompletion();
         return true;
     }
