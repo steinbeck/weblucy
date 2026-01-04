@@ -7,6 +7,8 @@
     <!-- Kekule.js for molecule handling and SMILES generation -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/kekule/dist/themes/default/kekule.css" />
     <script src="https://cdn.jsdelivr.net/npm/kekule/dist/kekule.min.js?modules=io,chemWidget"></script>
+    <!-- JSZip for creating zip files -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -323,6 +325,7 @@
         <button class="btn-secondary" id="btn-back" onclick="stepBackward()" disabled>&larr; Back</button>
         <button class="btn-primary" id="btn-forward" onclick="stepForward()" disabled>Forward &rarr;</button>
         <button class="btn-secondary" id="btn-auto" onclick="toggleAutoStep()" disabled>Auto Step</button>
+        <button class="btn-primary" id="btn-silent" onclick="silentGeneration()" disabled>Silent Generation</button>
     </div>
 
     <div class="step-info" id="step-info">Enter a formula and click "Create Matrix" to begin</div>

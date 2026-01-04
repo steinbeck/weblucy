@@ -694,6 +694,7 @@ function updateControls() {
     document.getElementById('btn-back').disabled = currentStateIndex <= 0;
     document.getElementById('btn-forward').disabled = states.length === 0;
     document.getElementById('btn-auto').disabled = states.length === 0;
+    document.getElementById('btn-silent').disabled = N === 0;
 }
 
 /**
@@ -960,6 +961,261 @@ function hideMolecule() {
         statusElement.textContent = 'Find a valid structure to see the 2D depiction.';
         statusElement.style.color = '#666';
     }
+}
+
+/**
+ * Silent generation - enumerate all valid structures and download as zip
+ * This enumerates ALL possible H-Count distributions, then for each
+ * distribution enumerates all valid bond configurations.
+ */
+async function silentGeneration() {
+    if (N === 0) {
+        showStatus('Please create a matrix first', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-silent');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    showStatus('Generating all valid structures (enumerating all H distributions)...', 'info');
+
+    // Use setTimeout to allow UI to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const validSmiles = [];
+
+    // Get atom info
+    const atomInfo = [];
+    for (let i = 1; i <= N; i++) {
+        const atom = getAtom(i);
+        atomInfo.push({
+            index: i,
+            symbol: atom.symbol,
+            valence: atom.valence,
+            maxBond: atom.maxBond,
+            maxH: atom.valence - 1  // Max H per atom (leave at least 1 for bonds)
+        });
+    }
+
+    const totalH = atoms.totalH;
+
+    // Get all matrix positions to fill (lower triangle)
+    const positions = [];
+    for (let j = 1; j < N; j++) {
+        for (let i = j + 1; i <= N; i++) {
+            positions.push({ i, j });
+        }
+    }
+
+    console.log('Silent generation starting...');
+    console.log('N =', N);
+    console.log('Total H =', totalH);
+    console.log('Positions to fill:', positions.length);
+
+    let hDistributionsChecked = 0;
+    let bondConfigurationsChecked = 0;
+
+    /**
+     * Generate all valid H distributions that sum to totalH
+     */
+    function* generateHDistributions(atomIndex, remainingH, currentDistribution) {
+        if (atomIndex >= N) {
+            if (remainingH === 0) {
+                yield [...currentDistribution];
+            }
+            return;
+        }
+
+        const maxH = atomInfo[atomIndex].maxH;
+        const minH = Math.max(0, remainingH - sumMaxH(atomIndex + 1));
+
+        for (let h = minH; h <= Math.min(maxH, remainingH); h++) {
+            currentDistribution[atomIndex] = h;
+            yield* generateHDistributions(atomIndex + 1, remainingH - h, currentDistribution);
+        }
+    }
+
+    /**
+     * Sum of maxH for atoms from index to end
+     */
+    function sumMaxH(fromIndex) {
+        let sum = 0;
+        for (let i = fromIndex; i < N; i++) {
+            sum += atomInfo[i].maxH;
+        }
+        return sum;
+    }
+
+    /**
+     * Check if current bond configuration is valid and connected
+     */
+    function isValidComplete(freeValences, workMatrix, workBondSum) {
+        // Check all valences are satisfied
+        for (let k = 1; k <= N; k++) {
+            if (workBondSum[k] !== freeValences[k]) {
+                return false;
+            }
+        }
+
+        // Check connectivity using DFS
+        const visited = new Array(N + 1).fill(false);
+        let visitedCount = 0;
+
+        function dfs(atomIndex) {
+            if (visited[atomIndex]) return;
+            visited[atomIndex] = true;
+            visitedCount++;
+            for (let j = 1; j <= N; j++) {
+                if ((workMatrix[atomIndex][j] > 0 || workMatrix[j][atomIndex] > 0) && !visited[j]) {
+                    dfs(j);
+                }
+            }
+        }
+
+        dfs(1);
+        return visitedCount === N;
+    }
+
+    /**
+     * Generate SMILES from working matrix
+     */
+    function generateSmiles(workMatrix) {
+        try {
+            const mol = new Kekule.Molecule();
+            const kekuleAtoms = [];
+
+            for (let i = 1; i <= N; i++) {
+                const kAtom = new Kekule.Atom();
+                kAtom.setSymbol(atomInfo[i - 1].symbol);
+                mol.appendNode(kAtom);
+                kekuleAtoms.push(kAtom);
+            }
+
+            for (let i = 1; i <= N; i++) {
+                for (let j = i + 1; j <= N; j++) {
+                    const bondOrder = workMatrix[i][j];
+                    if (bondOrder > 0) {
+                        const bond = new Kekule.Bond();
+                        bond.setBondOrder(bondOrder);
+                        bond.setConnectedObjs([kekuleAtoms[i - 1], kekuleAtoms[j - 1]]);
+                        mol.appendConnector(bond);
+                    }
+                }
+            }
+
+            return Kekule.IO.saveFormatData(mol, 'smi');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Enumerate all bond configurations for a given H distribution
+     */
+    function enumerateBonds(freeValences) {
+        // Create working matrix and bondSum arrays
+        const workMatrix = [];
+        const workBondSum = [];
+        for (let i = 0; i <= N; i++) {
+            workMatrix[i] = [];
+            workBondSum[i] = 0;
+            for (let j = 0; j <= N; j++) {
+                workMatrix[i][j] = 0;
+            }
+        }
+
+        function enumerate(posIndex) {
+            if (posIndex >= positions.length) {
+                // Reached end - check if valid
+                bondConfigurationsChecked++;
+                if (isValidComplete(freeValences, workMatrix, workBondSum)) {
+                    const smiles = generateSmiles(workMatrix);
+                    if (smiles) {
+                        validSmiles.push(smiles);
+                    }
+                }
+                return;
+            }
+
+            const { i, j } = positions[posIndex];
+            const maxBondI = atomInfo[i - 1].maxBond;
+            const maxBondJ = atomInfo[j - 1].maxBond;
+            const maxBond = Math.min(maxBondI, maxBondJ);
+
+            // Try bond orders: 0, 1, 2, 3
+            for (let bondOrder = 0; bondOrder <= maxBond; bondOrder++) {
+                // Check if this bond order is feasible
+                const newBondSumI = workBondSum[i] + bondOrder;
+                const newBondSumJ = workBondSum[j] + bondOrder;
+
+                if (newBondSumI <= freeValences[i] && newBondSumJ <= freeValences[j]) {
+                    // Apply bond
+                    workMatrix[i][j] = bondOrder;
+                    workMatrix[j][i] = bondOrder;
+                    workBondSum[i] = newBondSumI;
+                    workBondSum[j] = newBondSumJ;
+
+                    // Recurse
+                    enumerate(posIndex + 1);
+
+                    // Undo bond
+                    workMatrix[i][j] = 0;
+                    workMatrix[j][i] = 0;
+                    workBondSum[i] -= bondOrder;
+                    workBondSum[j] -= bondOrder;
+                }
+            }
+        }
+
+        enumerate(0);
+    }
+
+    // Enumerate all H distributions and for each, enumerate bonds
+    try {
+        for (const hDistribution of generateHDistributions(0, totalH, new Array(N))) {
+            hDistributionsChecked++;
+
+            // Calculate freeValences (1-indexed)
+            const freeValences = [0]; // Index 0 unused
+            for (let i = 0; i < N; i++) {
+                freeValences.push(atomInfo[i].valence - hDistribution[i]);
+            }
+
+            // Enumerate all bond configurations for this H distribution
+            enumerateBonds(freeValences);
+        }
+    } catch (e) {
+        console.error('Error during enumeration:', e);
+    }
+
+    console.log('H distributions checked:', hDistributionsChecked);
+    console.log('Bond configurations checked:', bondConfigurationsChecked);
+    console.log('Valid structures found:', validSmiles.length);
+    console.log('SMILES:', validSmiles);
+
+    // Create and download zip file
+    if (validSmiles.length > 0) {
+        const zip = new JSZip();
+        const smilesContent = validSmiles.join('\n');
+        zip.file('structures.smi', smilesContent);
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `weblucy_structures_${validSmiles.length}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showStatus(`Generated ${validSmiles.length} structures (including duplicates) from ${hDistributionsChecked} H-distributions. Download started.`, 'success');
+    } else {
+        showStatus('No valid structures found.', 'warning');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Silent Generation';
 }
 
 // Initialize on page load
