@@ -464,6 +464,10 @@ function toggleAutoStep() {
             }
         }
 
+        // Get speed from dropdown
+        const speedSelect = document.getElementById('speed-select');
+        const speed = parseInt(speedSelect.value) || 100;
+
         // Start auto-stepping
         autoStepInterval = setInterval(() => {
             const hasMore = stepForward();
@@ -471,7 +475,7 @@ function toggleAutoStep() {
             if (!hasMore) {
                 toggleAutoStep();
             }
-        }, 500);
+        }, speed);
         btn.textContent = 'Stop';
         btn.classList.remove('btn-secondary');
         btn.classList.add('btn-primary');

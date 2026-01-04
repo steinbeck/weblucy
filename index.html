@@ -91,6 +91,20 @@
             background: #545b62;
         }
 
+        select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #6c757d;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
         .controls {
             display: flex;
             gap: 10px;
@@ -325,6 +339,12 @@
         <button class="btn-secondary" id="btn-back" onclick="stepBackward()" disabled>&larr; Back</button>
         <button class="btn-primary" id="btn-forward" onclick="stepForward()" disabled>Forward &rarr;</button>
         <button class="btn-secondary" id="btn-auto" onclick="toggleAutoStep()" disabled>Auto Step</button>
+        <select id="speed-select" title="Auto-step speed">
+            <option value="500">Slow</option>
+            <option value="250">Medium</option>
+            <option value="100" selected>Fast</option>
+            <option value="50">Very Fast</option>
+        </select>
         <button class="btn-primary" id="btn-silent" onclick="silentGeneration()" disabled>Silent Generation</button>
     </div>
 
