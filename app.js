@@ -26,6 +26,7 @@ let bondSum = [];         // Current bond sum for each atom
 let states = [];          // History of states for backward navigation
 let currentStateIndex = -1;
 let autoStepInterval = null;
+let structureCount = 0;   // Counter for valid structures found
 
 // API endpoint for 2D depiction
 const DEPICT_API_URL = 'https://api.naturalproducts.net/latest/depict/2D';
@@ -178,6 +179,13 @@ function initializeMolecule() {
         // Reset state
         states = [];
         currentStateIndex = -1;
+        structureCount = 0;
+
+        // Reset molecule heading
+        const headingElement = document.getElementById('molecule-heading');
+        if (headingElement) {
+            headingElement.textContent = 'Molecule Structure';
+        }
 
         // Save initial state
         saveState(0, 0, 'Initial empty matrix');
@@ -879,9 +887,18 @@ async function fetch2DDepiction(smiles) {
 async function displayMolecule() {
     console.log('displayMolecule called');
 
+    // Increment structure counter
+    structureCount++;
+
     const panel = document.getElementById('molecule-panel');
     const viewerElement = document.getElementById('molecule-viewer');
     const statusElement = document.getElementById('molecule-status');
+    const headingElement = document.getElementById('molecule-heading');
+
+    // Update heading with structure count
+    if (headingElement) {
+        headingElement.textContent = `Molecule Structure #${structureCount}`;
+    }
 
     if (!viewerElement) {
         console.error('molecule-viewer element not found');
@@ -948,6 +965,10 @@ function hideMolecule() {
     const panel = document.getElementById('molecule-panel');
     const viewerElement = document.getElementById('molecule-viewer');
     const statusElement = document.getElementById('molecule-status');
+    const headingElement = document.getElementById('molecule-heading');
+
+    // Reset structure counter
+    structureCount = 0;
 
     if (panel) {
         panel.classList.remove('has-molecule');
@@ -960,6 +981,10 @@ function hideMolecule() {
     if (statusElement) {
         statusElement.textContent = 'Find a valid structure to see the 2D depiction.';
         statusElement.style.color = '#666';
+    }
+
+    if (headingElement) {
+        headingElement.textContent = 'Molecule Structure';
     }
 }
 
