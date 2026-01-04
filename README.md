@@ -20,7 +20,7 @@ For production-level structure generation from molecular formulas, consider usin
 - **Editable Hydrogen Distribution**: Freely adjust how hydrogens are distributed among heavy atoms
 - **Step-by-Step Algorithm**: Walk through the bond insertion process with Forward/Back buttons
 - **Connectivity Validation**: Only connected molecules are accepted as valid structures
-- **2D Structure Depiction**: Valid molecules are displayed using the Natural Products API
+- **2D Structure Depiction**: Valid molecules are displayed using the Cheminformatics Microservice
 - **Structure Counter**: Track how many valid structures have been found (shown in panel heading)
 
 ### Auto-Step Mode
@@ -77,7 +77,7 @@ Then open http://localhost:8000
 
 - [Kekule.js](https://partridgejiang.github.io/Kekule.js/) - For molecule representation and SMILES generation
 - [JSZip](https://stuk.github.io/jszip/) - For creating downloadable zip files
-- [Natural Products API](https://api.naturalproducts.net/latest/docs) - For 2D structure depiction
+- [Cheminformatics Microservice](https://api.naturalproducts.net/latest/docs) - For 2D structure depiction ([Publication](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-023-00762-4))
 
 ## Algorithm
 
@@ -105,4 +105,4 @@ Christoph Steinbeck
 - Original LUCY algorithm (1994-1995)
 - [Kekule.js](https://partridgejiang.github.io/Kekule.js/) by Partridge Jiang
 - [JSZip](https://stuk.github.io/jszip/) by Stuart Knightley
-- [Cheminformatics Microservices](https://api.naturalproducts.net) by the Steinbeck Group
+- [Cheminformatics Microservice](https://api.naturalproducts.net) by the Steinbeck Lab - Rajan K, Chandrasekhar V, Sharma N, et al. *J Cheminform* 15, 107 (2023). [DOI: 10.1186/s13321-023-00762-4](https://doi.org/10.1186/s13321-023-00762-4)
