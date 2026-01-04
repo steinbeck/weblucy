@@ -1100,10 +1100,14 @@ async function silentGeneration() {
         }
     }
 
+    // Get bond order mode from dropdown
+    const bondOrderMode = getBondOrderMode();
+
     console.log('Silent generation starting...');
     console.log('N =', N);
     console.log('Total H =', totalH);
     console.log('Positions to fill:', positions.length);
+    console.log('Bond order mode:', bondOrderMode);
 
     let hDistributionsChecked = 0;
     let bondConfigurationsChecked = 0;
@@ -1235,8 +1239,12 @@ async function silentGeneration() {
             const maxBondJ = atomInfo[j - 1].maxBond;
             const maxBond = Math.min(maxBondI, maxBondJ);
 
-            // Try bond orders: 0, 1, 2, 3
-            for (let bondOrder = 0; bondOrder <= maxBond; bondOrder++) {
+            // Try bond orders based on selected mode
+            const bondOrders = bondOrderMode === 'desc'
+                ? [3, 2, 1, 0].filter(b => b <= maxBond)
+                : [0, 1, 2, 3].filter(b => b <= maxBond);
+
+            for (const bondOrder of bondOrders) {
                 // Check if this bond order is feasible
                 const newBondSumI = workBondSum[i] + bondOrder;
                 const newBondSumJ = workBondSum[j] + bondOrder;
